@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 # Para crear la session del logueo
-from flask_login import LoginManager, login_user
+from flask_login import LoginManager, login_user, login_required
 
 from forms import LoginForm, SignupForm
 from models import User, db_user, get_user
@@ -10,7 +10,7 @@ app.config["SECRET_KEY"] = "so-secret"
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-
+login_manager.login_view = "signin"
 
 @app.route("/")
 def index():
@@ -44,6 +44,7 @@ def signin():
         password = request.form["password"]
         user = get_user(email)
         if user is not None and user.verify_password(password):
+            print(user.password)
             login_user(user)
         
             return redirect(url_for("dashboard"))
@@ -51,6 +52,7 @@ def signin():
 
 
 @app.route("/dashboard")
+@login_required
 def dashboard():
     return render_template("dashboard.html")
 
@@ -58,6 +60,6 @@ def dashboard():
 @login_manager.user_loader
 def load_user(user_id):
     for user in db_user:
-        if user.id == user_id:
+        if user.id == int(user_id):
             return user
         return None
